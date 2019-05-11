@@ -8,28 +8,29 @@ Leverage Meraki new camera API and MQTT capability to create a notification serv
 
 ![](/docs/digram.png)
 
+## Meraki and MQTT Configuration
 
-## API and technology
+1. Install an MQTT Broker
 
-### API
+`apt-get install mosquitto mosquitto-client`
 
-[Camera API](https://dashboard.meraki.com/api_docs#cameras): Returns video link for the specified camera. If a timestamp supplied, it links to that time.
+2. Go to **Cameras > [Camera Name] > Settings > Sense** page.
+3. Click **Add or edit MQTT Brokers > New MQTT Broker** and add your broker information.
+4. Make sure that your mosquitto server is accessible from the Internet and it's receiving events from Dashboard.
 
-### MQTT and setting:
+`mosquitto_sub -v -h server_ip -p 1883 -t '/merakimv/#'`
 
-1. Go to **Cameras > [Camera Name] > Settings > Sense** page.
-2. Click **Add or edit MQTT Brokers > New MQTT Broker** and add you broker information. For testing/trial you can find public broker at [here](https://github.com/mqtt/mqtt.github.io/wiki/public_brokers).
-3. You can install [MQTT.fx](https://mqttfx.jensd.de/) to subscribe to MQTT broker. This is a very useful tool
 
 ## Build locally
 ### Config
-#### Configurations in `config.py`
+#### Open and complete all fields in `config.py`
 
 ### Build
-1. Run `python3 install -r requirement.txt`
+1. Run `pip3 install -r requirements.txt`
 2. Run `python3 app.py`
 
 ## Docker
 
 Build : `docker build -t meraki-camera-notification .`
+
 Run : `docker run -it meraki-camera-notification .`
