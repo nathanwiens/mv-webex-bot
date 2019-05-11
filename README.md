@@ -1,10 +1,8 @@
 # Meraki Camera Notification
 
-[![published](https://static.production.devnetcloud.com/codeexchange/assets/images/devnet-published.svg)](https://developer.cisco.com/codeexchange/github/repo/CiscoDevNet/Meraki-Camera-Notification)
-
 This is an extension of the Meraki Camera Notification script found here: https://github.com/CiscoDevNet/Meraki-Camera-Notification
 
-Leverage Meraki new camera API and MQTT capability to create a notification service. When the camera detects a person consistently appears in a particular zone the service will send a Webex team message to a Webex team room with a video link which will directly go to the video footage when that event occurred.
+This script leverages Meraki's camera API and MQTT as part of MV Sense to create a notification service. When the camera detects a defined number of people in a particular zone the service will send a Webex Teams message to a defined with a video link to the video footage when that event occurred.
 
 ![](/docs/digram.png)
 
