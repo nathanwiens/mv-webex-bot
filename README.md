@@ -5,6 +5,7 @@ This is an extension/rewrite of the Meraki Camera Notification script found here
 This script leverages Meraki's camera API and MQTT as part of MV Sense to create a notification service. When the camera detects a defined number of people in a particular zone the service will send a Webex Teams message with a video link to the video footage.
 
 ![](https://i.imgur.com/kIb1ts8.png)
+![](https://i.imgur.com/GvqsQO3.png)
 
 ## Meraki and MQTT Configuration
 
