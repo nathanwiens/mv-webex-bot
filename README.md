@@ -30,6 +30,7 @@ pip3 install -r requirements.txt
 
 ### Config
 Open and complete all fields in `config.py`
+Add mvnotify@webex.bot to your WebEx Teams room
 
 ### Run
 ```bash
@@ -42,8 +43,14 @@ python3 app.py
 ```bash
 git clone git://github.com/nathanwiens/mv-webex-bot
 cd mv-webex-bot
+```
+Open and complete all fields in `config.py`
+Add mvnotify@webex.bot to your WebEx Teams room
+```
 docker build -t meraki-camera-notification .
 ```
 
 ### Run 
-`docker run -it meraki-camera-notification .`
+```
+docker run -it meraki-camera-notification .
+```
