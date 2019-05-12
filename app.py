@@ -1,7 +1,7 @@
 import json, requests
 import time
 import paho.mqtt.client as mqtt
-import config
+import config, merakiapi
 
 from webexteam import sent_notification
 
@@ -35,6 +35,9 @@ MOTION_ALERT_PAUSE_TIME = config.MOTION_ALERT_PAUSE_TIME
 _MONITORING_TRIGGERED = False
 _MONITORING_MESSAGE_COUNT = 0
 _MONITORING_PEOPLE_TOTAL_COUNT = 0
+_MONITORING_PAUSE_ACTIVE = False
+
+_LAST_NOTIFY = int(time.time())
 
 
 def collect_zone_information(topic, payload):
@@ -44,7 +47,7 @@ def collect_zone_information(topic, payload):
     zone_id = parameters[3]
     index = len([i for i, x in enumerate(COLLECT_ZONE_IDS) if x == zone_id])
 
-    # If not a zone, quit
+    # Filter out lux messages
     if COLLECT_ZONE_IDS[0] != "*":
         if index == 0 or zone_id == "0":
             return
@@ -54,18 +57,30 @@ def collect_zone_information(topic, payload):
     # If MOTION_ALERT_PEOPLE_COUNT_THRESHOLD triggered, start monitoring
 
     if _MONITORING_TRIGGERED:
-        _MONITORING_MESSAGE_COUNT += 1
+        if payload['counts']['person'] >= MOTION_ALERT_PEOPLE_COUNT_THRESHOLD:
+            _MONITORING_MESSAGE_COUNT += 1
 
-        # Add current people count to total
-        _MONITORING_PEOPLE_TOTAL_COUNT += payload['counts']['person']
-        if _MONITORING_MESSAGE_COUNT > MOTION_ALERT_ITERATE_COUNT:
-            if _MONITORING_PEOPLE_TOTAL_COUNT >= MOTION_ALERT_TRIGGER_PEOPLE_COUNT:
-                # Send notification
-                notify(serial_number)
-                # Wait before sending subsequent alert
-                time.sleep(MOTION_ALERT_PAUSE_TIME)
-
-            # reset
+            # Add current people count to total
+            _MONITORING_PEOPLE_TOTAL_COUNT += payload['counts']['person']
+            if _MONITORING_MESSAGE_COUNT > MOTION_ALERT_ITERATE_COUNT:
+                if _MONITORING_PEOPLE_TOTAL_COUNT >= MOTION_ALERT_TRIGGER_PEOPLE_COUNT:
+                    # Send notification
+                    zones = merakiapi.getmvzones(MERAKI_API_KEY, serial_number)
+                    for zone in zones:
+                        if zone['zoneId'] == zone_id:
+                            zone_name = zone['label']
+                    notify(serial_number,zone_name)
+                    # Wait before sending subsequent alert
+                    #time.sleep(MOTION_ALERT_PAUSE_TIME)
+                
+                # Reset
+                print("Resetting values")
+                _MONITORING_MESSAGE_COUNT = 0
+                _MONITORING_PEOPLE_TOTAL_COUNT = 0
+                _MONITORING_TRIGGERED = False
+                
+        else:
+            #Reset
             _MONITORING_MESSAGE_COUNT = 0
             _MONITORING_PEOPLE_TOTAL_COUNT = 0
             _MONITORING_TRIGGERED = False
@@ -80,21 +95,34 @@ def collect_zone_information(topic, payload):
           ", _MONITORING_PEOPLE_TOTAL_COUNT : " + str(_MONITORING_PEOPLE_TOTAL_COUNT))
 
 
-def notify(serial_number):
-    # Get video link
-    ts = str(time.time()).split(".")[0] + "000"
-    url = "https://dashboard.meraki.com/api/v0/networks/{1}/cameras/{0}/videoLink?timestamp={2}".format(serial_number, NETWORK_ID, ts)
+def notify(serial_number,zone_name):
+    global _LAST_NOTIFY
+    print("Time since last notification: ")
+    print(int(time.time()) - _LAST_NOTIFY)
+    if ((int(time.time()) - _LAST_NOTIFY) >= MOTION_ALERT_PAUSE_TIME):
 
-    headers = {
-        'X-Cisco-Meraki-API-Key': MERAKI_API_KEY,
-        "Content-Type": "application/json"
-    }
-    resp = requests.get(url, headers=headers)
-    respjson = json.loads(resp.text)
+        # Get video link
+        ts = str(time.time()).split(".")[0] + "000"
+        url = "https://dashboard.meraki.com/api/v0/networks/{1}/cameras/{0}/videoLink?timestamp={2}".format(serial_number, NETWORK_ID, ts)
+    
+        headers = {
+            'X-Cisco-Meraki-API-Key': MERAKI_API_KEY,
+            "Content-Type": "application/json"
+        }
+        resp = requests.get(url, headers=headers)
+        respjson = json.loads(resp.text)
+        
+        camera = merakiapi.getdevicedetail(MERAKI_API_KEY, NETWORK_ID, serial_number)
+    
+        if int(resp.status_code / 100) == 2:
+            msg = "Camera **{}** ({}) zone **{}** detected at least ({}) person(s).  \n Video : {}".format(camera['name'], serial_number, zone_name, MOTION_ALERT_PEOPLE_COUNT_THRESHOLD, respjson['url'])
+            result = sent_notification(msg)
+            
+            _LAST_NOTIFY = int(time.time())
+    else:
+        print("Skipping Notification, too soon")
+    
 
-    if int(resp.status_code / 100) == 2:
-        msg = "Camera {} detected at least ({}) person(s).  \n Video : {}".format(serial_number, MOTION_ALERT_PEOPLE_COUNT_THRESHOLD, respjson['url'])
-        result = sent_notification(msg)
 
 
 def on_connect(client, userdata, flags, rc):
@@ -113,7 +141,6 @@ def on_message(client, userdata, msg):
         return
     if msg.topic[-14:] != 'raw_detections':
         collect_zone_information(msg.topic, payload)
-
 
 if __name__ == "__main__":
 
