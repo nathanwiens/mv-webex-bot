@@ -1,5 +1,5 @@
 import json, requests
-import time
+import time, datetime
 import paho.mqtt.client as mqtt
 import config, merakiapi
 
@@ -101,24 +101,31 @@ def notify(serial_number,zone_name):
     print(int(time.time()) - _LAST_NOTIFY)
     if ((int(time.time()) - _LAST_NOTIFY) >= MOTION_ALERT_PAUSE_TIME):
 
-        # Get video link
         ts = str(time.time()).split(".")[0] + "000"
-        url = "https://dashboard.meraki.com/api/v0/networks/{1}/cameras/{0}/videoLink?timestamp={2}".format(serial_number, NETWORK_ID, ts)
-    
-        headers = {
-            'X-Cisco-Meraki-API-Key': MERAKI_API_KEY,
-            "Content-Type": "application/json"
-        }
-        resp = requests.get(url, headers=headers)
-        respjson = json.loads(resp.text)
+        #snaptime = (datetime.datetime.now() - datetime.timedelta(seconds=5)).isoformat().split(".")[0] + "-06:00"
+        #print(snaptime)
         
+        posturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/cameras/{1}/snapshot'.format(NETWORK_ID, serial_number)
+        headers = {
+            'x-cisco-meraki-api-key': format(str(MERAKI_API_KEY)),
+            'Content-Type': 'application/json'
+        }
+        postdata = {
+            #'timestamp': format(str(snaptime))	
+        }
+
+        dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
+        djson = json.loads(dashboard.text)
+        file = format(str(djson['url']))
+                
+        videolink = merakiapi.getmvvideolink(MERAKI_API_KEY, NETWORK_ID, serial_number, ts)
         camera = merakiapi.getdevicedetail(MERAKI_API_KEY, NETWORK_ID, serial_number)
     
-        if int(resp.status_code / 100) == 2:
-            msg = "Camera **{}** ({}) zone **{}** detected at least ({}) person(s).  \n Video : {}".format(camera['name'], serial_number, zone_name, MOTION_ALERT_PEOPLE_COUNT_THRESHOLD, respjson['url'])
-            result = sent_notification(msg)
-            
-            _LAST_NOTIFY = int(time.time())
+        msg = "**New People Detection!** <br> **Camera:** {} ({}) <br> **Zone:** {} <br> **Total detections:** {}  <br> **Video Link:** {}".format(camera['name'], serial_number, zone_name, MOTION_ALERT_PEOPLE_COUNT_THRESHOLD, videolink['url'])
+        time.sleep(3)
+        result = sent_notification(msg,files=file)
+        
+        _LAST_NOTIFY = int(time.time())
     else:
         print("Skipping Notification, too soon")
     

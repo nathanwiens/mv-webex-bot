@@ -55,14 +55,18 @@ def make_request(url_ext, method, post_data=""):
     return False
 
 
-def sent_notification(msg):
+def sent_notification(msg,files=None):
     data = {
         "roomId": ROOM_ID,
-        "markdown": msg
+        "markdown": msg,
+        "files": [
+        files
+        ]
     }
 
     try:
         rep = make_request("messages", "POST", json.dumps(data))
+        print(rep)
 
     except Exception as e:
         pass

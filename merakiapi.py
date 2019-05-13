@@ -18,6 +18,7 @@ import json
 from ipaddress import ip_address
 import re
 import warnings
+import datetime
 
 
 tzlist = ['Africa/Abidjan',
@@ -1062,6 +1063,39 @@ def getmvzones(apikey, serialnumber, suppressprint=False):
     }
 
     dashboard = requests.get(geturl, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
+    return result
+    
+def getmvvideolink(apikey, networkid, serialnumber, timestamp=None, suppressprint=False):
+
+    calltype = 'MV Video Link'
+    geturl = '{0}/networks/{1}/cameras/{2}/videoLink?timestamp={3}'.format(str(base_url), str(networkid), str(serialnumber), str(timestamp))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    dashboard = requests.get(geturl, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
+    return result
+    
+def mvsnapshot(apikey, networkid, serialnumber, timestamp, suppressprint=False):
+    calltype = 'MV Snapshot'
+    #posturl = '{0}/networks/{1}/cameras/{2}/snapshot'.format(str(base_url), str(networkid), str(serialnumber))
+    posturl = 'https://dashboard.meraki.com/api/v0/networks/N_584342051651357195/cameras/Q2HV-FXHD-ELZ4/snapshot'
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    postdata = {}
+
+    dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
     #
     # Call return handler function to parse Dashboard response
     #
