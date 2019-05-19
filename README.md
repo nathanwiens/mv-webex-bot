@@ -15,7 +15,7 @@ This script leverages Meraki's camera API and MQTT as part of MV Sense to create
 
 2. In Dashboard, Go to **Cameras > [Camera Name] > Settings > Sense**.
 3. Click **Add or edit MQTT Brokers > New MQTT Broker** and add your broker information.
-4. Make sure that your mosquitto server is accessible from the Internet and it's receiving events from Dashboard.
+4. Make sure that your mosquitto server is accessible from your camera and that it's receiving events.
 
 `mosquitto_sub -v -h `_**server_ip**_` -p 1883 -t '/merakimv/#'`
 
