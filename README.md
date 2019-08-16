@@ -57,3 +57,18 @@ docker build -t meraki-camera-notification .
 ```
 docker run -it meraki-camera-notification .
 ```
+
+## Docker-compose
+
+```
+  mvbot:
+    container_name: mvbot
+    image: mvbot
+    build: ./mv-webex-bot/
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - TZ=America/Denver
+    volumes:
+      - ./mv-webex-bot:/opt
+```
