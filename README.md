@@ -7,6 +7,10 @@ This script leverages Meraki's camera API and MQTT as part of MV Sense to create
 ![](https://i.imgur.com/kIb1ts8.png)
 ![](https://i.imgur.com/IcuRy1L.png)
 
+And with optional Microsoft Cognitive Services integration:
+
+![](https://i.imgur.com/PLLCetS.png)
+
 ## Meraki and MQTT Configuration
 
 1. Install an MQTT Broker
