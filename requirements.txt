@@ -1,3 +1,2 @@
 paho-mqtt
 requests
-json
