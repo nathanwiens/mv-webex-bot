@@ -1,3 +1,4 @@
 paho-mqtt
 requests
 requests-toolbelt
+python-telegram-bot
